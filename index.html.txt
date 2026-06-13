@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EFT Progression Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#131713;overflow-x:hidden}
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:#0d100d}
+  ::-webkit-scrollbar-thumb{background:#385038;border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:#4ec8d0}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const {useState,useEffect} = React;
+
+const C={
+  bg:'#131713',surface:'#0d100d',card:'#1a1f1a',panel:'#111511',
+  border:'#263226',borderB:'#385038',
+  cyan:'#4ec8d0',cyanDim:'#1a4850',cyanBr:'#6ee8f0',
+  gold:'#c8aa50',goldDim:'#5a4820',
+  text:'#b0bfb0',textBr:'#d8e8d0',muted:'#4a5e4a',
+  green:'#48c840',red:'#c84040',
+};
+const FONT="'Rajdhani','Oswald','Arial Narrow',Arial,sans-serif";
+const TM={
+  Prapor:{c:'#e05555'},Therapist:{c:'#52c41a'},Skier:{c:'#4096ff'},
+  Peacekeeper:{c:'#13c2c2'},Mechanic:{c:'#faad14'},Ragman:{c:'#b37feb'},
+  Jaeger:{c:'#73d13d'},Fence:{c:'#8c8c8c'},REF:{c:'#ff7a45'},Lightkeeper:{c:'#00c8e8'},
+};
+
+const QUESTS=[
+  {id:'p1',t:'Prapor',n:'Debut',lvl:1,k:true},
+  {id:'p2',t:'Prapor',n:'Shooting Cans',lvl:1,k:true},
+  {id:'p3',t:'Prapor',n:'Shortage',lvl:1,k:true},
+  {id:'p4',t:'Prapor',n:'Delivery from the Past',lvl:4,k:true},
+  {id:'p5',t:'Prapor',n:'Gratitude',lvl:4,k:true},
+  {id:'p6',t:'Prapor',n:'The Extortionist',lvl:14,k:true},
+  {id:'p7',t:'Prapor',n:'Gunfighter Part 1',lvl:14,k:true},
+  {id:'p8',t:'Prapor',n:'Gunfighter Part 2',lvl:20,k:true},
+  {id:'p9',t:'Prapor',n:'Gunfighter Part 3',lvl:26,k:true},
+  {id:'p10',t:'Prapor',n:'Punisher Part 1',lvl:18,k:true},
+  {id:'p11',t:'Prapor',n:'Punisher Part 2',lvl:20,k:true},
+  {id:'p12',t:'Prapor',n:'Punisher Part 3',lvl:24,k:true},
+  {id:'p13',t:'Prapor',n:'Punisher Part 4',lvl:26,k:true},
+  {id:'p14',t:'Prapor',n:'Punisher Part 5',lvl:28,k:true},
+  {id:'p15',t:'Prapor',n:'Punisher Part 6',lvl:30,k:true,note:'GPU→Hideout'},
+  {id:'p16',t:'Prapor',n:'Long Road',lvl:20,k:true},
+  {id:'p17',t:'Prapor',n:'Fishing Place',lvl:22,k:true},
+  {id:'p18',t:'Prapor',n:'Bad Guys Beware',lvl:26,k:true},
+  {id:'p19',t:'Prapor',n:'Big Customer',lvl:30,k:true},
+  {id:'p20',t:'Prapor',n:'The Blood of War Part 1',lvl:32,k:true},
+  {id:'p21',t:'Prapor',n:'The Blood of War Part 2',lvl:34,k:true},
+  {id:'p22',t:'Prapor',n:'The Blood of War Part 3',lvl:36,k:true},
+  {id:'p23',t:'Prapor',n:'Saving the Mole',lvl:38,k:true},
+  {id:'p24',t:'Prapor',n:'Huntsman Path - Sadist',lvl:40,k:true},
+  {id:'p25',t:'Prapor',n:"Prapor's Request",lvl:45,k:true},
+  {id:'th1',t:'Therapist',n:'Sanitary Standards Part 1',lvl:1,k:true},
+  {id:'th2',t:'Therapist',n:'Sanitary Standards Part 2',lvl:8,k:true},
+  {id:'th3',t:'Therapist',n:'Keeping It Clean',lvl:14,k:true},
+  {id:'th4',t:'Therapist',n:'Supply Plans',lvl:14,k:true},
+  {id:'th5',t:'Therapist',n:'Spa Tour Part 1',lvl:20,k:true},
+  {id:'th6',t:'Therapist',n:'Spa Tour Part 2',lvl:22,k:true},
+  {id:'th7',t:'Therapist',n:'Spa Tour Part 3',lvl:24,k:true},
+  {id:'th8',t:'Therapist',n:'Spa Tour Part 4',lvl:26,k:true},
+  {id:'th9',t:'Therapist',n:'Spa Tour Part 5',lvl:28,k:true},
+  {id:'th10',t:'Therapist',n:'Spa Tour Part 6',lvl:30,k:true},
+  {id:'th11',t:'Therapist',n:'Spa Tour Part 7',lvl:32,k:true},
+  {id:'th12',t:'Therapist',n:'Survivalist Path - Unprotected but Dangerous',lvl:22,k:true},
+  {id:'th13',t:'Therapist',n:'Survivalist Path - Thrifty',lvl:24,k:true},
+  {id:'th14',t:'Therapist',n:'Survivalist Path - Zhivchik',lvl:26,k:true},
+  {id:'th15',t:'Therapist',n:'Survivalist Path - Paranoid',lvl:28,k:true},
+  {id:'th16',t:'Therapist',n:'Survivalist Path - Tough Guy',lvl:30,k:true},
+  {id:'th17',t:'Therapist',n:'Survivalist Path - Bloodhound',lvl:32,k:true},
+  {id:'th18',t:'Therapist',n:'Survivalist Path - Supersoldier',lvl:34,k:true},
+  {id:'th19',t:'Therapist',n:"A Bandit's Choice",lvl:20,k:true},
+  {id:'th20',t:'Therapist',n:'Cold Blooded',lvl:36,k:true},
+  {id:'sk1',t:'Skier',n:'Acquaintance',lvl:1,k:true},
+  {id:'sk2',t:'Skier',n:'Bronze Pocket Watch',lvl:1,k:true},
+  {id:'sk3',t:'Skier',n:'Bad Habit',lvl:8,k:true},
+  {id:'sk4',t:'Skier',n:'Shady Business',lvl:14,k:true},
+  {id:'sk5',t:'Skier',n:'Last Resort',lvl:20,k:true},
+  {id:'sk6',t:'Skier',n:'Chemical Part 1',lvl:22,k:true},
+  {id:'sk7',t:'Skier',n:'Chemical Part 2',lvl:24,k:true},
+  {id:'sk8',t:'Skier',n:'Chemical Part 3',lvl:26,k:true},
+  {id:'sk9',t:'Skier',n:'Chemical Part 4',lvl:28,k:true,note:'Fuel→Hideout'},
+  {id:'sk10',t:'Skier',n:'Stirrup',lvl:20,k:true},
+  {id:'sk11',t:'Skier',n:'Mentor',lvl:26,k:true},
+  {id:'sk12',t:'Skier',n:'Ice Cream Cones',lvl:30,k:true},
+  {id:'sk13',t:'Skier',n:'Loyalty Buyout',lvl:34,k:true},
+  {id:'pk1',t:'Peacekeeper',n:'Checking Part 1',lvl:14,k:true},
+  {id:'pk2',t:'Peacekeeper',n:'Checking Part 2',lvl:16,k:true},
+  {id:'pk3',t:'Peacekeeper',n:'Checking Part 3',lvl:18,k:true},
+  {id:'pk4',t:'Peacekeeper',n:'Humanitarian Supplies',lvl:14,k:true},
+  {id:'pk5',t:'Peacekeeper',n:'UN Roadblock',lvl:20,k:true},
+  {id:'pk6',t:'Peacekeeper',n:'Bunker Part 1',lvl:22,k:true},
+  {id:'pk7',t:'Peacekeeper',n:'Bunker Part 2',lvl:24,k:true},
+  {id:'pk8',t:'Peacekeeper',n:'Ballistic Warfare',lvl:26,k:true},
+  {id:'pk9',t:'Peacekeeper',n:'Scrap Metal',lvl:28,k:true},
+  {id:'pk10',t:'Peacekeeper',n:'Big Sale',lvl:20,k:true},
+  {id:'pk11',t:'Peacekeeper',n:'Out of Curiosity',lvl:22,k:true},
+  {id:'pk12',t:'Peacekeeper',n:'Northern Neighbor',lvl:30,k:true},
+  {id:'pk13',t:'Peacekeeper',n:'Patriot',lvl:34,k:true},
+  {id:'pk14',t:'Peacekeeper',n:'Back Door',lvl:36,k:true},
+  {id:'pk15',t:'Peacekeeper',n:'Sew It Up',lvl:26,k:true},
+  {id:'mc1',t:'Mechanic',n:'Gunsmith Part 1',lvl:1,k:true},
+  {id:'mc2',t:'Mechanic',n:'Gunsmith Part 2',lvl:8,k:true},
+  {id:'mc3',t:'Mechanic',n:'Gunsmith Part 3',lvl:10,k:true},
+  {id:'mc4',t:'Mechanic',n:'Gunsmith Part 4',lvl:12,k:true},
+  {id:'mc5',t:'Mechanic',n:'Gunsmith Part 5',lvl:14,k:true},
+  {id:'mc6',t:'Mechanic',n:'Gunsmith Part 6',lvl:16,k:true},
+  {id:'mc7',t:'Mechanic',n:'Gunsmith Part 7',lvl:18,k:true},
+  {id:'mc8',t:'Mechanic',n:'Gunsmith Part 8',lvl:20,k:true},
+  {id:'mc9',t:'Mechanic',n:'Gunsmith Part 9',lvl:22,k:true},
+  {id:'mc10',t:'Mechanic',n:'Gunsmith Part 10',lvl:24,k:true},
+  {id:'mc11',t:'Mechanic',n:'Gunsmith Part 11',lvl:26,k:true},
+  {id:'mc12',t:'Mechanic',n:'Gunsmith Part 12',lvl:28,k:true},
+  {id:'mc13',t:'Mechanic',n:'Gunsmith Part 13',lvl:30,k:true},
+  {id:'mc14',t:'Mechanic',n:'Gunsmith Part 14',lvl:32,k:true},
+  {id:'mc15',t:'Mechanic',n:'Gunsmith Part 15',lvl:34,k:true},
+  {id:'mc16',t:'Mechanic',n:'Gunsmith Part 16',lvl:36,k:true},
+  {id:'mc17',t:'Mechanic',n:'Gunsmith Part 17',lvl:38,k:true},
+  {id:'mc18',t:'Mechanic',n:'Friend from the West Part 1',lvl:14,k:true},
+  {id:'mc19',t:'Mechanic',n:'Friend from the West Part 2',lvl:20,k:true},
+  {id:'mc20',t:'Mechanic',n:'Wet Job Part 1',lvl:14,k:true},
+  {id:'mc21',t:'Mechanic',n:'Wet Job Part 2',lvl:16,k:true},
+  {id:'mc22',t:'Mechanic',n:'Wet Job Part 3',lvl:18,k:true},
+  {id:'mc23',t:'Mechanic',n:'Wet Job Part 4',lvl:20,k:true},
+  {id:'mc24',t:'Mechanic',n:'Wet Job Part 5',lvl:22,k:true},
+  {id:'mc25',t:'Mechanic',n:'Wet Job Part 6',lvl:24,k:true},
+  {id:'mc26',t:'Mechanic',n:'Tarkov Shooter Part 1',lvl:18,k:true},
+  {id:'mc27',t:'Mechanic',n:'Tarkov Shooter Part 2',lvl:20,k:true},
+  {id:'mc28',t:'Mechanic',n:'Tarkov Shooter Part 3',lvl:22,k:true},
+  {id:'mc29',t:'Mechanic',n:'Tarkov Shooter Part 4',lvl:24,k:true},
+  {id:'mc30',t:'Mechanic',n:'Tarkov Shooter Part 5',lvl:26,k:true},
+  {id:'mc31',t:'Mechanic',n:'Tarkov Shooter Part 6',lvl:28,k:true},
+  {id:'mc32',t:'Mechanic',n:'Tarkov Shooter Part 7',lvl:30,k:true},
+  {id:'mc33',t:'Mechanic',n:'Tarkov Shooter Part 8',lvl:32,k:true},
+  {id:'mc34',t:'Mechanic',n:'Nostalgia',lvl:20,k:true},
+  {id:'mc35',t:'Mechanic',n:'Inside Out',lvl:36,k:true},
+  {id:'rg1',t:'Ragman',n:'Textile Part 1',lvl:1,k:true},
+  {id:'rg2',t:'Ragman',n:'Textile Part 2',lvl:8,k:true},
+  {id:'rg3',t:'Ragman',n:'Textile Part 3',lvl:20,k:true},
+  {id:'rg4',t:'Ragman',n:'Hot Delivery',lvl:14,k:true},
+  {id:'rg5',t:'Ragman',n:'Dressed to Kill',lvl:18,k:true},
+  {id:'rg6',t:'Ragman',n:'Rage Game',lvl:22,k:true},
+  {id:'rg7',t:'Ragman',n:'The Stylish One',lvl:24,k:true},
+  {id:'rg8',t:'Ragman',n:'Livelihood',lvl:26,k:true},
+  {id:'rg9',t:'Ragman',n:'1000 meters',lvl:28,k:true},
+  {id:'rg10',t:'Ragman',n:'Pain Killer',lvl:30,k:true},
+  {id:'rg11',t:'Ragman',n:'Clothed and Armed',lvl:32,k:true},
+  {id:'rg12',t:'Ragman',n:'Good Job!',lvl:34,k:true},
+  {id:'rg13',t:'Ragman',n:'Make Ammo Great Again!',lvl:36,k:true},
+  {id:'ja1',t:'Jaeger',n:'An Unexpected Visit',lvl:1,k:true},
+  {id:'ja2',t:'Jaeger',n:'Acquaintance',lvl:2,k:true},
+  {id:'ja3',t:'Jaeger',n:'Huntsman Path - Forest Cleaning',lvl:1,k:true},
+  {id:'ja4',t:'Jaeger',n:'Huntsman Path - Sell-out',lvl:8,k:true},
+  {id:'ja5',t:'Jaeger',n:'Huntsman Path - Secured Perimeter',lvl:12,k:true},
+  {id:'ja6',t:'Jaeger',n:'Huntsman Path - Trophy Hunter',lvl:20,k:true},
+  {id:'ja7',t:'Jaeger',n:'Huntsman Path - Relentless',lvl:22,k:true},
+  {id:'ja8',t:'Jaeger',n:'Huntsman Path - Eraser Part 1',lvl:24,k:true},
+  {id:'ja9',t:'Jaeger',n:'Huntsman Path - Eraser Part 2',lvl:26,k:true},
+  {id:'ja10',t:'Jaeger',n:'Huntsman Path - The Protectors',lvl:28,k:true},
+  {id:'ja11',t:'Jaeger',n:'Huntsman Path - Predator',lvl:30,k:true},
+  {id:'ja12',t:'Jaeger',n:'Huntsman Path - Master',lvl:32,k:true},
+  {id:'ja13',t:'Jaeger',n:'Hunter',lvl:14,k:true},
+  {id:'ja14',t:'Jaeger',n:'Knock Knock',lvl:20,k:true},
+  {id:'ja15',t:'Jaeger',n:'Colleagues Part 1',lvl:22,k:true},
+  {id:'ja16',t:'Jaeger',n:'Colleagues Part 2',lvl:24,k:true},
+  {id:'ja17',t:'Jaeger',n:'Colleagues Part 3',lvl:26,k:true},
+  {id:'ja18',t:'Jaeger',n:'Reap What You Sow',lvl:28,k:true},
+  {id:'ja19',t:'Jaeger',n:'The Perfect Weapon',lvl:30,k:true},
+  {id:'fe1',t:'Fence',n:'Compensation for Damage Part 1',lvl:15,k:false},
+  {id:'fe2',t:'Fence',n:'Compensation for Damage Part 2',lvl:20,k:false},
+  {id:'fe3',t:'Fence',n:'Collector',lvl:60,k:false,note:'1 de cada ítem'},
+  {id:'fe4',t:'Fence',n:'Regulated Materials',lvl:60,k:true,note:'⭐ OTORGA EL KAPPA'},
+  {id:'rf1',t:'REF',n:'Corporate Secrets',lvl:1,k:false,note:'XP inicial'},
+  {id:'rf2',t:'REF',n:'Backstab',lvl:14,k:false},
+  {id:'rf3',t:'REF',n:'Reclamation',lvl:20,k:false},
+  {id:'rf4',t:'REF',n:'Supply Line',lvl:24,k:false},
+  {id:'rf5',t:'REF',n:'Recon',lvl:28,k:false},
+  {id:'rf6',t:'REF',n:'Exposure',lvl:32,k:false},
+  {id:'rf7',t:'REF',n:'Field Operative',lvl:36,k:false},
+  {id:'rf8',t:'REF',n:'Asset Acquisition',lvl:40,k:false},
+  {id:'lk1',t:'Lightkeeper',n:'Simple Side Job',lvl:35,k:false},
+  {id:'lk2',t:'Lightkeeper',n:'Order From Outside',lvl:36,k:false},
+  {id:'lk3',t:'Lightkeeper',n:'Information Source',lvl:38,k:false},
+  {id:'lk4',t:'Lightkeeper',n:"Keeper's Word",lvl:40,k:false},
+  {id:'lk5',t:'Lightkeeper',n:'Missing Informant',lvl:40,k:false},
+  {id:'lk6',t:'Lightkeeper',n:'Surprise Gift',lvl:42,k:false},
+  {id:'lk7',t:'Lightkeeper',n:'Snatch',lvl:44,k:false},
+  {id:'lk8',t:'Lightkeeper',n:'Return the Favor',lvl:46,k:true,note:'⭐ Kappa required'},
+  {id:'lk9',t:'Lightkeeper',n:'Payback',lvl:48,k:false},
+  {id:'lk10',t:'Lightkeeper',n:'Provocation',lvl:50,k:false},
+  {id:'lk11',t:'Lightkeeper',n:'Following the Bread Crumbs',lvl:52,k:false},
+  {id:'lk12',t:'Lightkeeper',n:'Spotter',lvl:55,k:false},
+  {id:'lk13',t:'Lightkeeper',n:'Make an Impression',lvl:58,k:false},
+  {id:'lk14',t:'Lightkeeper',n:'Trouble in the Big City',lvl:60,k:false},
+];
+
+const PRESTIGES=[
+  {num:1,color:'#4ec8d0',level:25,tasks:['New Beginning'],skills:[],
+   hideout:['Intelligence Center  1/1','Rest Space  2/2','Nutrition Unit  2/2'],roubles:10000000,
+   rewards:['Hideout: Luxury flooring','Gestos: Rock · Paper · Scissors','Character stats: Charisma+','Dogtag (Prestige 1)','Poster "What You Seek"','Armband (Prestige 1)','Mannequin pose: Feel My Gains','Unique ID: Prestige icon']},
+  {num:2,color:'#8888ff',level:30,tasks:['New Beginning','Tour'],skills:[{n:'Strength',v:10},{n:'Endurance',v:10},{n:'Charisma',v:7}],
+   hideout:['Intelligence Center  1/1','Rest Space  2/2','Nutrition Unit  2/2'],roubles:15000000,
+   rewards:['Item: Akula push dagger (melee exclusivo)','Daily task · Weekly task adicionales','Character stats: Charisma+','Main menu bg: CyberTark','Gesto: OK','Hideout: Quiet Luxury','Dogtag · Armband (Prestige 2)','Mannequin pose: Slav Squat','Poster "I Bear Loot"','Unique ID: Prestige icon']},
+  {num:3,color:'#50d870',level:35,tasks:['New Beginning','Tour','Falling Skies'],skills:[{n:'Strength',v:10},{n:'Endurance',v:10},{n:'Charisma',v:7}],
+   hideout:['Intelligence Center  1/1','Rest Space  2/2','Nutrition Unit  2/2'],roubles:15000000,
+   rewards:['Hideout: Dropped ceiling','Dogtag · Armband (Prestige 3)','Item: PMC Origins figurine','Character stats: Charisma+','Character voice: Vitaly · Rob','Poster "Get a Life"','Mannequin pose: Honor','Hideout target: Crow','Unique ID: Prestige icon']},
+  {num:4,color:'#e8a030',level:40,tasks:['New Beginning','Tour','Obtain the Ticket from Tarkov'],skills:[{n:'Strength',v:15},{n:'Endurance',v:15},{n:'Charisma',v:12}],
+   hideout:['Intelligence Center  1/1','Rest Space  2/2','Nutrition Unit  2/2'],roubles:15000000,
+   rewards:['Tactical clothing: Green Hawaii shirt','Tactical clothing: Blue Hawaii shirt','Character stats: Charisma+','Hideout target: Darts','Mannequin pose: Jomoon','Dogtag · Armband (Prestige 4)','Poster "Get a Paw"','Hideout: Gray wood','Unique ID: Prestige icon']},
+  {num:5,color:'#e060a0',level:47,tasks:['Collector','New Beginning','Tour','They Are Already Here','Obtain the Ticket from Tarkov'],skills:[{n:'Strength',v:20},{n:'Endurance',v:20},{n:'Charisma',v:20}],
+   hideout:['Intelligence Center  2/2','Security  3/3','Rest Space  3/3'],roubles:20000000,
+   rewards:['Character appearance: Basilevs · Shawn','Character stats: Charisma+','Hideout target: Rat','Mannequin pose: T-pose','Dogtag · Armband (Prestige 5)','Poster: Killagirl','Hideout: White walls','Item: NKVD Finka knife (melee exclusivo)','Unique ID: Prestige icon']},
+  {num:6,color:'#e8c030',level:47,tasks:['Collector','New Beginning','The Ticket'],skills:[{n:'Strength',v:20},{n:'Endurance',v:20},{n:'Charisma',v:20}],
+   hideout:['Intelligence Center  2/2','Security  3/3','Rest Space  3/3'],roubles:20000000,
+   rewards:['Hideout: Gilded ceiling ★','Item: Secure container Gamma (Loui Peeton) ★','Item: Hardened PMC figurine','Character stats: Charisma+','Hideout target: Rooster','Main menu bg: Hotline Tarkov','Poster: Chronicles of Ryzhy','Dogtag · Armband (Prestige 6)','Mannequin pose: Praisel','Unique ID: Prestige icon']},
+];
+
+const HIDEOUT=[
+  {s:'Bitcoin Farm',lvl:3,items:[{n:'Graphics card (GPU)',q:3,fq:true,qn:'Punisher P6·Prapor'},{n:'Power filter',q:6,fq:false},{n:'CPU fan',q:5,fq:false},{n:'PC block',q:2,fq:false}]},
+  {s:'Intelligence Center',lvl:3,items:[{n:'Military circuit board',q:5,fq:false},{n:'Ethernet cable',q:10,fq:false},{n:'Folder with intelligence',q:3,fq:true,qn:'Peacekeeper quests'},{n:'Broken LCD',q:5,fq:false}]},
+  {s:'Generator',lvl:3,items:[{n:'Expeditionary fuel tank',q:4,fq:false},{n:'Power filter',q:6,fq:false},{n:'Wires',q:10,fq:false},{n:'Bulb (100w)',q:8,fq:false}]},
+  {s:'Medstation',lvl:3,items:[{n:'Medical tools',q:10,fq:true,qn:'Therapist quests'},{n:'Aluminium splint',q:5,fq:false},{n:'Defibrillator',q:1,fq:false},{n:'Saline solution',q:5,fq:false}]},
+  {s:'Water Collector',lvl:3,items:[{n:'Water filter',q:2,fq:false},{n:'Screws',q:20,fq:false},{n:'Metal spare parts',q:10,fq:false},{n:'Poxeram cold welding',q:3,fq:false}]},
+  {s:'Workbench',lvl:3,items:[{n:'Toolset',q:3,fq:true,qn:'Gunsmith·Mechanic'},{n:'Wrench',q:5,fq:false},{n:'Wires',q:10,fq:false},{n:'Screwdriver',q:5,fq:false}]},
+  {s:'Nutrition Unit',lvl:3,items:[{n:'Canned beef stew (large)',q:8,fq:false},{n:'Condensed milk',q:5,fq:false},{n:'Squash spread',q:10,fq:false}]},
+  {s:'Shooting Range',lvl:3,items:[{n:'Wooden beam',q:20,fq:false},{n:'Plywood sheet',q:20,fq:false},{n:'Dry fuel',q:15,fq:false}]},
+  {s:'Lavatory',lvl:3,items:[{n:'Bleach',q:5,fq:false},{n:'Soap',q:20,fq:false},{n:'Toilet paper',q:5,fq:false}]},
+  {s:'Heating',lvl:3,items:[{n:'Expeditionary fuel tank',q:4,fq:false},{n:'Fuel conditioner',q:5,fq:true,qn:'Chemical P4·Skier'},{n:'Wires',q:8,fq:false}]},
+  {s:'Rest Space',lvl:3,items:[{n:'Moonshine',q:3,fq:false},{n:'Elite pliers',q:1,fq:false},{n:'Sofa cushion',q:10,fq:false}]},
+  {s:'Air Filtering Unit',lvl:3,items:[{n:'Gas analyzer',q:3,fq:false},{n:'Spark plug',q:4,fq:false},{n:'Wires',q:6,fq:false}]},
+  {s:'Illumination',lvl:3,items:[{n:'Bulb (100w)',q:20,fq:false},{n:'Wires',q:15,fq:false},{n:'Duct tape',q:10,fq:false}]},
+  {s:'Vents',lvl:3,items:[{n:'Duct tape',q:30,fq:false},{n:'Screws',q:30,fq:false},{n:'Metal spare parts',q:15,fq:false}]},
+  {s:'Security',lvl:3,items:[{n:'Metal spare parts',q:20,fq:false},{n:'Military battery',q:3,fq:false},{n:'NIXX flashlight',q:2,fq:false}]},
+  {s:'Stash',lvl:4,items:[{n:'Bolts',q:40,fq:false},{n:'Plywood sheet',q:30,fq:false},{n:'Corrugated hose',q:10,fq:false},{n:'Nails',q:50,fq:false}]},
+];
+
+const fmt=n=>n>=1000000?(n/1000000).toFixed(0)+'M':n>=1000?(n/1000).toFixed(0)+'K':n;
+
+function SectionHeader({children}){
+  return <div style={{fontFamily:FONT,fontSize:11,fontWeight:700,letterSpacing:3,color:C.muted,
+    borderBottom:`1px solid ${C.border}`,paddingBottom:4,marginBottom:8,textTransform:'uppercase'}}>{children}</div>;
+}
+
+function EftButton({onClick,children,active,danger}){
+  const[hover,setHover]=useState(false);
+  const bg=danger?(hover?'#6a1818':'#3a1010'):active?C.cyanDim:hover?'#1e2c1e':C.panel;
+  const col=danger?'#e86060':active?C.cyanBr:hover?C.cyan:C.text;
+  const bc=danger?'#5a2020':active?C.cyan:hover?C.borderB:C.border;
+  return <div onClick={onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}
+    style={{fontFamily:FONT,fontSize:12,fontWeight:600,letterSpacing:1.5,padding:'4px 12px',
+      cursor:'pointer',background:bg,color:col,border:`1px solid ${bc}`,userSelect:'none',
+      transition:'all 0.12s',textTransform:'uppercase',whiteSpace:'nowrap',
+      clipPath:'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)'}}>{children}</div>;
+}
+
+function ProgressBar({pct,color}){
+  return <div style={{height:4,background:C.border,overflow:'hidden'}}>
+    <div style={{height:'100%',width:`${pct}%`,background:color||C.cyan,transition:'width 0.4s'}}/>
+  </div>;
+}
+
+function CheckRow({checked,onClick,children,dim}){
+  const[hover,setHover]=useState(false);
+  return <div onClick={onClick} onMouseEnter={()=>setHover(true)} onMouseLeave={()=>setHover(false)}
+    style={{display:'flex',alignItems:'center',gap:8,padding:'5px 8px',cursor:'pointer',
+      background:hover?'#1c281c':checked?'#182018':'transparent',
+      borderBottom:`1px solid ${C.border}44`,transition:'background 0.1s',opacity:checked?0.55:1}}>
+    <div style={{width:14,height:14,flexShrink:0,border:`1px solid ${checked?C.green:C.muted}`,
+      background:checked?C.green:'transparent',display:'flex',alignItems:'center',
+      justifyContent:'center',color:'#fff',fontSize:9,fontWeight:'bold'}}>{checked?'✓':''}</div>
+    <span style={{fontFamily:FONT,fontSize:13,color:checked?C.muted:C.textBr,
+      textDecoration:checked?'line-through':'none',letterSpacing:0.3,flex:1}}>{children}</span>
+    {dim&&<span style={{display:'flex',alignItems:'center',gap:4,flexShrink:0}}>{dim}</span>}
+  </div>;
+}
+
+function TradBadge({trader}){
+  const c=TM[trader]?.c||'#888';
+  return <span style={{fontFamily:FONT,fontSize:10,fontWeight:600,letterSpacing:1,padding:'1px 5px',
+    background:c+'22',color:c,border:`1px solid ${c}44`,whiteSpace:'nowrap'}}>{trader}</span>;
+}
+
+function StatBox({n,l,color}){
+  return <div style={{background:C.panel,border:`1px solid ${C.border}`,padding:'8px 14px',flex:1,
+    minWidth:80,textAlign:'center',clipPath:'polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%)'}}>
+    <div style={{color:color||C.cyan,fontSize:20,fontWeight:700,letterSpacing:1,fontFamily:FONT}}>{n}</div>
+    <div style={{color:C.muted,fontSize:10,letterSpacing:1.5,marginTop:1,fontFamily:FONT}}>{l}</div>
+  </div>;
+}
+
+function EFTTracker(){
+  const[tab,setTab]=useState('kappa');
+  const[done,setDone]=useState({});
+  const[hdDone,setHdDone]=useState({});
+  const[trader,setTrader]=useState('All');
+  const[kappaOnly,setKappaOnly]=useState(false);
+  const[station,setStation]=useState('All');
+  const[loaded,setLoaded]=useState(false);
+
+  useEffect(()=>{
+    try{const r=localStorage.getItem('eft-done');if(r)setDone(JSON.parse(r));}catch(e){}
+    try{const r=localStorage.getItem('eft-hd');if(r)setHdDone(JSON.parse(r));}catch(e){}
+    setLoaded(true);
+  },[]);
+  useEffect(()=>{if(loaded){try{localStorage.setItem('eft-done',JSON.stringify(done));}catch(e){}}},[done,loaded]);
+  useEffect(()=>{if(loaded){try{localStorage.setItem('eft-hd',JSON.stringify(hdDone));}catch(e){}}},[hdDone,loaded]);
+
+  const toggle=id=>setDone(d=>({...d,[id]:!d[id]}));
+  const toggleHd=id=>setHdDone(d=>({...d,[id]:!d[id]}));
+  const resetAll=()=>{if(window.confirm('¿Resetear todo el progreso?')){setDone({});setHdDone({});}};
+
+  const kappaQs=QUESTS.filter(q=>q.k);
+  const kDone=kappaQs.filter(q=>done[q.id]).length;
+  const kPct=Math.round(kDone/kappaQs.length*100);
+  const traders=['All',...Object.keys(TM)];
+  const visQ=QUESTS.filter(q=>(trader==='All'||q.t===trader)&&(!kappaOnly||q.k))
+    .sort((a,b)=>a.lvl!==b.lvl?a.lvl-b.lvl:a.t.localeCompare(b.t));
+  const stations=['All',...HIDEOUT.map(h=>h.s)];
+  const visHd=station==='All'?HIDEOUT:HIDEOUT.filter(h=>h.s===station);
+
+  return (
+    <div style={{background:C.bg,minHeight:'100vh',fontFamily:FONT,color:C.text,fontSize:14}}>
+      {/* HEADER */}
+      <div style={{background:C.surface,borderBottom:`2px solid ${C.border}`,padding:'0 16px',
+        display:'flex',alignItems:'stretch',justifyContent:'space-between'}}>
+        <div style={{padding:'10px 0'}}>
+          <div style={{color:C.cyan,fontSize:18,fontWeight:700,letterSpacing:4,lineHeight:1}}>ESCAPE FROM TARKOV</div>
+          <div style={{color:C.muted,fontSize:10,letterSpacing:3}}>PROGRESSION TRACKER · v1.0</div>
+        </div>
+        <div style={{display:'flex',alignItems:'center',gap:12}}>
+          <div style={{textAlign:'right'}}>
+            <div style={{color:C.muted,fontSize:10,letterSpacing:2}}>KAPPA PROGRESS</div>
+            <div style={{color:C.cyan,fontSize:15,fontWeight:700,letterSpacing:1}}>{kDone}/{kappaQs.length} · {kPct}%</div>
+          </div>
+          <EftButton onClick={resetAll} danger>RESET</EftButton>
+        </div>
+      </div>
+      {/* TABS */}
+      <div style={{display:'flex',background:C.surface,borderBottom:`1px solid ${C.border}`}}>
+        {[['kappa','🎯  KAPPA ROADMAP'],['prestige','⭐  PRESTIGE'],['hideout','🏠  HIDEOUT']].map(([k,l])=>(
+          <div key={k} onClick={()=>setTab(k)} style={{padding:'10px 20px',cursor:'pointer',fontFamily:FONT,
+            fontSize:12,fontWeight:700,letterSpacing:2,userSelect:'none',color:tab===k?C.cyan:C.muted,
+            borderBottom:tab===k?`2px solid ${C.cyan}`:'2px solid transparent',
+            borderRight:`1px solid ${C.border}`,transition:'all 0.15s',
+            background:tab===k?C.cyanDim+'33':'transparent'}}>{l}</div>
+        ))}
+      </div>
+      {/* BODY */}
+      <div style={{padding:'14px 16px',maxWidth:920,margin:'0 auto'}}>
+
+        {/* ── KAPPA TAB ── */}
+        {tab==='kappa'&&<>
+          <div style={{display:'flex',gap:8,marginBottom:14,flexWrap:'wrap'}}>
+            <StatBox n={kDone} l="COMPLETADAS"/>
+            <StatBox n={kappaQs.length-kDone} l="PENDIENTES" color={C.text}/>
+            <StatBox n={`${kPct}%`} l="PROGRESO" color={kPct===100?C.green:C.cyan}/>
+            <StatBox n={QUESTS.filter(q=>!q.k&&done[q.id]).length} l="XP EXTRA" color={TM.REF.c}/>
+          </div>
+          <div style={{marginBottom:14,background:C.panel,border:`1px solid ${C.border}`,padding:10}}>
+            <div style={{display:'flex',justifyContent:'space-between',color:C.muted,fontSize:10,letterSpacing:2,marginBottom:6}}>
+              <span>RUTA GLOBAL AL KAPPA</span><span style={{color:C.cyan}}>{kPct}%</span>
+            </div>
+            <ProgressBar pct={kPct}/>
+            <div style={{display:'flex',flexWrap:'wrap',gap:'4px 0',marginTop:10}}>
+              {Object.entries(TM).map(([tr,{c}])=>{
+                const tq=QUESTS.filter(q=>q.t===tr&&q.k);
+                const td=tq.filter(q=>done[q.id]).length;
+                const pct=tq.length?Math.round(td/tq.length*100):100;
+                return <div key={tr} style={{display:'flex',alignItems:'center',gap:8,width:'50%',padding:'2px 0'}}>
+                  <span style={{fontFamily:FONT,fontSize:10,fontWeight:600,letterSpacing:1,padding:'1px 5px',
+                    background:c+'22',color:c,border:`1px solid ${c}44`,width:90,textAlign:'center'}}>{tr}</span>
+                  <div style={{flex:1,height:3,background:C.border,overflow:'hidden'}}>
+                    <div style={{height:'100%',width:`${pct}%`,background:c,transition:'width 0.3s'}}/>
+                  </div>
+                  <span style={{color:C.muted,fontSize:10,minWidth:40,textAlign:'right'}}>{td}/{tq.length}</span>
+                </div>;
+              })}
+            </div>
+          </div>
+          <div style={{display:'flex',gap:6,marginBottom:8,flexWrap:'wrap',alignItems:'center'}}>
+            <span style={{color:C.muted,fontSize:10,letterSpacing:2}}>TRADER:</span>
+            {traders.map(t=><EftButton key={t} active={trader===t} onClick={()=>setTrader(t)}>{t}</EftButton>)}
+          </div>
+          <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap',alignItems:'center'}}>
+            <EftButton active={kappaOnly} onClick={()=>setKappaOnly(x=>!x)}>{kappaOnly?'✓ Solo Kappa':'Solo Kappa'}</EftButton>
+            <span style={{color:C.muted,fontSize:10,letterSpacing:1,marginLeft:4}}>{visQ.length} MISIONES</span>
+          </div>
+          {visQ.map(q=>(
+            <CheckRow key={q.id} checked={!!done[q.id]} onClick={()=>toggle(q.id)}
+              dim={<>
+                {q.note&&<span style={{color:'#6a8a50',fontSize:10}}>{q.note}</span>}
+                {q.k&&<span style={{fontFamily:FONT,fontSize:10,fontWeight:600,letterSpacing:1,
+                  padding:'1px 5px',background:C.goldDim,color:C.gold,border:`1px solid ${C.goldDim}`}}>KAPPA</span>}
+                <TradBadge trader={q.t}/>
+                <span style={{fontFamily:FONT,fontSize:10,fontWeight:600,letterSpacing:1,
+                  padding:'1px 5px',background:C.cyanDim,color:C.cyan,border:`1px solid ${C.cyanDim}`}}>LV{q.lvl}</span>
+              </>}>{q.n}</CheckRow>
+          ))}
+          <div style={{color:C.muted,fontSize:10,padding:'7px 10px',background:C.panel,
+            border:`1px solid ${C.border}`,marginTop:12,letterSpacing:0.5,lineHeight:1.6}}>
+            ⚠ DATOS APROXIMADOS — EFT SE ACTUALIZA FRECUENTEMENTE. VERIFICÁ EN EL WIKI OFICIAL ANTE DISCREPANCIAS.
+          </div>
+        </>}
+
+        {/* ── PRESTIGE TAB ── */}
+        {tab==='prestige'&&<>
+          <div style={{color:C.muted,fontSize:10,padding:'7px 10px',background:C.panel,
+            border:`1px solid ${C.cyan}44`,marginBottom:14,letterSpacing:0.5,lineHeight:1.6,
+            borderLeft:`3px solid ${C.cyan}`}}>
+            ℹ️ DATOS EXTRAÍDOS DIRECTAMENTE DEL JUEGO. P5 Y P6 COMPARTEN NIVEL/SKILLS PERO DIFIEREN EN MISIONES.
+          </div>
+          {PRESTIGES.map(p=>{
+            const dr=p.tasks.filter((_,i)=>done[`pr_${p.num}_t${i}`]).length
+              +p.skills.filter((_,i)=>done[`pr_${p.num}_s${i}`]).length
+              +p.hideout.filter((_,i)=>done[`pr_${p.num}_h${i}`]).length
+              +(done[`pr_${p.num}_lvl`]?1:0)+(done[`pr_${p.num}_rou`]?1:0);
+            const total=1+p.tasks.length+p.skills.length+p.hideout.length+1;
+            const pct=Math.round(dr/total*100);
+            return <div key={p.num} style={{display:'flex',gap:0,marginBottom:12,
+              border:`1px solid ${p.color}44`,borderLeft:`3px solid ${p.color}`,background:C.card,
+              overflow:'hidden',clipPath:'polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)'}}>
+              <div style={{flex:'0 0 270px',background:C.panel,borderRight:`1px solid ${C.border}`,padding:12}}>
+                <SectionHeader>UNLOCK CONDITIONS</SectionHeader>
+                <div style={{marginBottom:8}}>
+                  <div style={{color:C.muted,fontSize:10,letterSpacing:2,marginBottom:4}}>CHARACTER LEVEL</div>
+                  <CheckRow checked={!!done[`pr_${p.num}_lvl`]}
+                    onClick={()=>setDone(d=>({...d,[`pr_${p.num}_lvl`]:!d[`pr_${p.num}_lvl`]}))}>
+                    <span style={{color:p.color,fontWeight:700}}>Level {p.level}</span>
+                  </CheckRow>
+                </div>
+                <div style={{marginBottom:8}}>
+                  <div style={{color:C.muted,fontSize:10,letterSpacing:2,marginBottom:4}}>TASKS</div>
+                  {p.tasks.map((t,i)=><CheckRow key={i} checked={!!done[`pr_${p.num}_t${i}`]}
+                    onClick={()=>setDone(d=>({...d,[`pr_${p.num}_t${i}`]:!d[`pr_${p.num}_t${i}`]}))}>
+                    <span style={{color:p.color,fontWeight:600}}>{t}</span>
+                  </CheckRow>)}
+                </div>
+                {p.skills.length>0&&<div style={{marginBottom:8}}>
+                  <div style={{color:C.muted,fontSize:10,letterSpacing:2,marginBottom:4}}>SKILLS</div>
+                  {p.skills.map((sk,i)=><CheckRow key={i} checked={!!done[`pr_${p.num}_s${i}`]}
+                    onClick={()=>setDone(d=>({...d,[`pr_${p.num}_s${i}`]:!d[`pr_${p.num}_s${i}`]}))}>
+                    <span style={{color:p.color,fontWeight:600}}>{sk.n}</span>
+                    <span style={{color:C.muted,fontSize:11,marginLeft:'auto',marginRight:4}}>·····</span>
+                    <span style={{color:p.color,fontWeight:700}}>{sk.v}/{sk.v}</span>
+                  </CheckRow>)}
+                </div>}
+                <div style={{marginBottom:8}}>
+                  <div style={{color:C.muted,fontSize:10,letterSpacing:2,marginBottom:4}}>HIDEOUT UPGRADES</div>
+                  {p.hideout.map((h,i)=><CheckRow key={i} checked={!!done[`pr_${p.num}_h${i}`]}
+                    onClick={()=>setDone(d=>({...d,[`pr_${p.num}_h${i}`]:!d[`pr_${p.num}_h${i}`]}))}>
+                    <span style={{color:p.color,fontWeight:600}}>{h}</span>
+                  </CheckRow>)}
+                </div>
+                <div style={{marginBottom:10}}>
+                  <div style={{color:C.muted,fontSize:10,letterSpacing:2,marginBottom:4}}>OBTAIN ITEMS</div>
+                  <CheckRow checked={!!done[`pr_${p.num}_rou`]}
+                    onClick={()=>setDone(d=>({...d,[`pr_${p.num}_rou`]:!d[`pr_${p.num}_rou`]}))}>
+                    <span style={{color:C.muted,fontWeight:600}}>Roubles</span>
+                    <span style={{color:p.color,fontWeight:700,marginLeft:'auto'}}>{fmt(p.roubles)}</span>
+                  </CheckRow>
+                </div>
+                <div style={{display:'flex',justifyContent:'space-between',color:C.muted,fontSize:9,letterSpacing:2,marginBottom:3}}>
+                  <span>PROGRESS</span><span style={{color:p.color}}>{dr}/{total}</span>
+                </div>
+                <ProgressBar pct={pct} color={p.color}/>
+                {pct===100&&<div style={{color:C.green,fontSize:10,letterSpacing:2,marginTop:4,fontWeight:700}}>✓ CONDITIONS MET</div>}
+              </div>
+              <div style={{flex:1,padding:12}}>
+                <div style={{fontFamily:FONT,fontSize:13,fontWeight:700,letterSpacing:3,color:p.color,
+                  marginBottom:10,borderBottom:`1px solid ${p.color}33`,paddingBottom:6}}>
+                  {'★'.repeat(p.num)} PRESTIGE {p.num} — REWARDS
+                </div>
+                {p.rewards.map((r,i)=><div key={i} style={{background:C.panel,border:`1px solid ${p.color}33`,
+                  padding:'4px 8px',fontSize:11,fontFamily:FONT,color:C.textBr,letterSpacing:0.3,
+                  marginBottom:3,borderLeft:`2px solid ${p.color}66`}}>{r}</div>)}
+              </div>
+            </div>;
+          })}
+        </>}
+
+        {/* ── HIDEOUT TAB ── */}
+        {tab==='hideout'&&<>
+          <div style={{display:'flex',gap:8,marginBottom:12,flexWrap:'wrap'}}>
+            <StatBox n={HIDEOUT.reduce((a,h)=>a+h.items.length,0)} l="ITEMS TOTALES"/>
+            <StatBox n={HIDEOUT.reduce((a,h)=>a+h.items.filter(it=>hdDone[`${h.s}_${it.n}`]).length,0)} l="FARMADOS" color={C.green}/>
+            <StatBox n={HIDEOUT.reduce((a,h)=>a+h.items.filter(it=>it.fq).length,0)} l="DE MISIONES" color={C.gold}/>
+          </div>
+          <div style={{display:'flex',gap:5,marginBottom:12,flexWrap:'wrap'}}>
+            {stations.map(st=><EftButton key={st} active={station===st} onClick={()=>setStation(st)}>{st==='All'?'TODAS':st}</EftButton>)}
+          </div>
+          {visHd.map(h=>{
+            const dn=h.items.filter(it=>hdDone[`${h.s}_${it.n}`]).length;
+            const pct=Math.round(dn/h.items.length*100);
+            return <div key={h.s} style={{background:C.card,border:`1px solid ${C.border}`,marginBottom:8,
+              clipPath:'polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)'}}>
+              <div style={{background:C.panel,padding:'7px 12px',display:'flex',alignItems:'center',
+                justifyContent:'space-between',borderBottom:`1px solid ${C.border}`}}>
+                <span style={{fontFamily:FONT,color:C.cyan,fontWeight:700,fontSize:13,letterSpacing:2}}>{h.s.toUpperCase()}</span>
+                <div style={{display:'flex',alignItems:'center',gap:10}}>
+                  <span style={{color:C.muted,fontSize:10,letterSpacing:1}}>L{h.lvl} MAX</span>
+                  <span style={{color:C.cyan,fontSize:11,fontWeight:700}}>{dn}/{h.items.length}</span>
+                  <div style={{width:60,height:3,background:C.border,overflow:'hidden'}}>
+                    <div style={{height:'100%',width:`${pct}%`,background:C.cyan}}/>
+                  </div>
+                </div>
+              </div>
+              {h.items.map(it=>{
+                const k=`${h.s}_${it.n}`;const ch=!!hdDone[k];
+                return <div key={it.n} onClick={()=>toggleHd(k)}
+                  style={{display:'flex',alignItems:'center',gap:8,padding:'6px 12px',
+                    borderBottom:`1px solid ${C.border}33`,background:ch?'#182418':'transparent',
+                    cursor:'pointer',opacity:ch?0.55:1,transition:'all 0.1s'}}>
+                  <div style={{width:14,height:14,flexShrink:0,border:`1px solid ${ch?C.green:C.muted}`,
+                    background:ch?C.green:'transparent',display:'flex',alignItems:'center',
+                    justifyContent:'center',color:'#fff',fontSize:9,fontWeight:'bold'}}>{ch?'✓':''}</div>
+                  <span style={{flex:1,fontFamily:FONT,fontSize:13,letterSpacing:0.3,
+                    color:ch?C.muted:C.textBr,textDecoration:ch?'line-through':'none'}}>{it.n}</span>
+                  <span style={{color:C.cyan,fontSize:13,fontWeight:700,minWidth:28,textAlign:'right'}}>×{it.q}</span>
+                  {it.fq&&<span style={{fontFamily:FONT,fontSize:10,fontWeight:600,letterSpacing:1,
+                    padding:'1px 5px',background:C.goldDim,color:C.gold,border:`1px solid ${C.goldDim}`}}>
+                    🎯 {it.qn}
+                  </span>}
+                </div>;
+              })}
+            </div>;
+          })}
+          <div style={{color:C.muted,fontSize:10,padding:'7px 10px',background:C.panel,
+            border:`1px solid ${C.border}`,marginTop:4,letterSpacing:0.5,lineHeight:1.6}}>
+            ⚠ CANTIDADES APROXIMADAS PARA NIVEL MÁXIMO DESDE CERO. ITEMS CON 🎯 SE OBTIENEN COMO RECOMPENSA DE MISIONES.
+          </div>
+        </>}
+
+      </div>
+    </div>
+  );
+}
+
+const root=ReactDOM.createRoot(document.getElementById('root'));
+root.render(<EFTTracker/>);
+</script>
+</body>
+</html>
